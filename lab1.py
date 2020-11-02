@@ -102,19 +102,21 @@ def caesar_break(text):
     text_to_test = normalized_text
     print(occurences)
 
-    possible_key = -1
+    possible_key = 0
+    lowest_estimate = -1
     for i in range(0,25):
-        estimated_key = 0
+        estimate = 0
 
         text_to_test = caesar_decrypt(text_to_test, i)
         occurences = Counter(text_to_test)
         
         for key in occurences:
             if freq[i] == 0: continue
-            estimated_key += ((occurences[key] - freq[i])**2) / freq[i]
+            estimate += ((occurences[key] - freq[i])**2) / freq[i]
 
-        if possible_key > estimated_key or possible_key == -1:
-            possible_key = estimated_key
+        if lowest_estimate > estimate or lowest_estimate == -1:
+            lowest_estimate = estimate
+            possible_key = i
 
     return possible_key
 
