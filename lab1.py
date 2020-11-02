@@ -78,7 +78,7 @@ def freq_analysis(text):
     for key in occurences:
         alph = string.ascii_uppercase
         if key in alph:
-            freq_vector[alph.index(key)] = occurences[key]/sum(occurences.values())
+            freq_vector[alph.index(key)] = occurences[key]/sum(occurences.values())*100
     return freq_vector
 
 
@@ -97,22 +97,21 @@ def caesar_break(text):
     f.close()
 
     normalized_text = normalize(text)
-    # normalized_text = re.sub('\W+','', normalized_text)
-    occurences = Counter(normalized_text)
-    text_to_test = normalized_text
-    print(occurences)
 
     possible_key = 0
     lowest_estimate = -1
-    for i in range(0,25):
+    for i in range(0,26):
         estimate = 0
 
-        text_to_test = caesar_decrypt(text_to_test, i)
+        text_to_test = caesar_decrypt(normalized_text, i)
         occurences = Counter(text_to_test)
-        
+        print(occurences)
+        # print("{}: {}".format(i, text_to_test))
         for key in occurences:
             if freq[i] == 0: continue
             estimate += ((occurences[key] - freq[i])**2) / freq[i]
+
+        # print("{} {}".format(i, estimate))
 
         if lowest_estimate > estimate or lowest_estimate == -1:
             lowest_estimate = estimate
