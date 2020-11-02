@@ -78,7 +78,7 @@ def freq_analysis(text):
     for key in occurences:
         alph = string.ascii_uppercase
         if key in alph:
-            freq_vector[alph.index(key)] = occurences[key]/sum(occurences.values())*100
+            freq_vector[alph.index(key)] = occurences[key]/sum(occurences.values())
     return freq_vector
 
 
@@ -97,6 +97,7 @@ def caesar_break(text):
     f.close()
 
     normalized_text = normalize(text)
+    normalized_text = re.sub('\W+','', normalized_text)
 
     possible_key = 0
     lowest_estimate = -1
@@ -105,13 +106,10 @@ def caesar_break(text):
 
         text_to_test = caesar_decrypt(normalized_text, i)
         occurences = Counter(text_to_test)
-        print(occurences)
-        # print("{}: {}".format(i, text_to_test))
-        for key in occurences:
-            if freq[i] == 0: continue
-            estimate += ((occurences[key] - freq[i])**2) / freq[i]
 
-        # print("{} {}".format(i, estimate))
+        for key in occurences:
+            index = ord(key)-ord('A')
+            estimate += ((occurences[key] - freq[index])**2) / freq[index]
 
         if lowest_estimate > estimate or lowest_estimate == -1:
             lowest_estimate = estimate
@@ -226,7 +224,7 @@ def vigenere_caesar_break(text):
 def main():
     print("Welcome to the Vigenere breaking tool")
 
-    print(caesar_break(caesar_encrypt("Ceci est un texte dans la langue de Molliere", 13)))
+    print(caesar_break(caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)))
     #TODO something
 
 if __name__ == "__main__":
