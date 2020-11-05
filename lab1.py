@@ -93,12 +93,14 @@ def freq_analysis(text):
     freq_vector = [0] * 26
     
     normalized_text = normalize(text)
+    normalized_text = re.sub('\W+','', normalized_text)
     occurences = Counter(normalized_text)
 
+    alph = string.ascii_uppercase
     for key in occurences:
-        alph = string.ascii_uppercase
         if key in alph:
             freq_vector[alph.index(key)] = occurences[key]/sum(occurences.values())
+
     return freq_vector
 
 
@@ -229,8 +231,16 @@ def coincidence_index(text):
     -------
     the index of coincidence of the text
     """
-    #TODO
-    return 0
+    text = normalize(text)
+
+    N = len(text)
+    freq = Counter(text)
+
+    sum = 0.0
+    for key in freq:
+        sum += freq[key] * (freq[key] - 1)
+
+    return 26*sum/(N * (N - 1))
 
 
 def vigenere_break(text):
@@ -299,11 +309,17 @@ def main():
 
     # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
     # print(caesar_decrypt(ct, caesar_break(ct)))
-    key = "cryptii"
-    cypher = vigenere_encrypt("Welcome to the Vigenere breaking tool", key)
-    print(cypher)
-    plaintext = vigenere_decrypt(cypher, key)
-    print(plaintext)
+    # key = "cryptii"
+    # cypher = vigenere_encrypt("Welcome to the Vigenere breaking tool", key)
+    # print(cypher)
+    # plaintext = vigenere_decrypt(cypher, key)
+    # print(plaintext)
+
+    with open("vigenere.txt", "r") as f:
+        freq = coincidence_index(f.read())
+
+
+    print(freq)
 
 if __name__ == "__main__":
     main()
