@@ -7,7 +7,8 @@ from collections import Counter
 def normalize(text):
     """
     Replace any spécial french character with it's "simpler" version and uppercase the text
-    e.g. é => e
+    e.g. é => E
+
     Parameters
     ----------
     text: the plaintext to normalize
@@ -17,6 +18,32 @@ def normalize(text):
     the normalized version of <text>
     """
     return unidecode.unidecode(text).upper()
+
+def shift(char, key):
+    """
+    Shifts a char <char> by <key> times
+    e.g. 
+    char = 'A'
+    key = 2
+    char = 'C'
+
+    Parameters
+    ----------
+    char: the char to shift
+    key: the shift which is a number
+
+    Returns
+    -------
+    the shifted char
+    """ 
+    alph = string.ascii_uppercase
+
+    # quick check to see if it's in the alphabet
+    # if not just return it
+    if not char in alph:
+        return char
+
+    return alph[(alph.index(char)+key)%26]
 
 def caesar_encrypt(text, key):
     """
@@ -34,14 +61,7 @@ def caesar_encrypt(text, key):
     normalized_text = normalize(text)
 
     for char in normalized_text:
-        alph = string.ascii_uppercase
-        if char in alph:
-            pos = alph.index(char)
-            encrypted += alph[(pos+key)%26]
-            pass
-        else:
-            encrypted += char
-            pass
+        encrypted += shift(char, key)
 
     return encrypted
 
@@ -118,22 +138,31 @@ def caesar_break(text):
     return possible_key
 
 
-def vigenere_encrypt(text, key):
+
+def vigenere_cypher(text, key, encrypt = True):
     """
+    Implementation of Vigenere's cypher. 
+    
+    Note: Since the same code is used for encryption and decryption the only 
+          difference beeing the direction in which the text is shifted (hence <encrypted>)
+
     Parameters
     ----------
-    text: the plaintext to encrypt
+    text: the text to encrypt/decrypt
     key: the keyword used in Vigenere (e.g. "pass")
+    encrypt: boolean to tell if we are encrypthing or not
     
     Returns
     -------
-    the ciphertext of <text> encrypted with Vigenere under key <key>
+    the value of <text> encrypted/decrypted with Vigenere under key <key>
     """
+
+    shift_direction = 1 if encrypt else -1
     alph = string.ascii_uppercase
     text = normalize(text)
     key = key.upper()
 
-    cipher_text = ""
+    output = ""
     i = 0
     for j in range(len(text)):
         """
@@ -152,18 +181,30 @@ def vigenere_encrypt(text, key):
         if i >= len(text): break
 
         if text[i] not in alph:
-            cipher_text += text[i]
+            output += text[i]
             i += 1
 
+        shiftv = alph.index(key[j % len(key)])
         # time to shift some letters :D
-        shift = alph.index(key[j % len(key)])
-        cl = (alph.index(text[i]) + shift) % 26
-        cipher_text += alph[cl]
+        output += shift(text[i], shift_direction*shiftv)
 
         i += 1
 
+    return output
 
-    return cipher_text
+def vigenere_encrypt(text, key):
+    """
+    Parameters
+    ----------
+    text: the plaintext to encrypt
+    key: the keyword used in Vigenere (e.g. "pass")
+    
+    Returns
+    -------
+    the ciphertext of <text> encrypted with Vigenere under key <key>
+    """
+
+    return vigenere_cypher(text, key)
 
 def vigenere_decrypt(text, key):
     """
@@ -176,8 +217,8 @@ def vigenere_decrypt(text, key):
     -------
     the plaintext of <text> decrypted with Vigenere under key <key>
     """
-    #TODO
-    return ""
+
+    return vigenere_cypher(text, key, False)
 
 def coincidence_index(text):
     """
@@ -259,7 +300,11 @@ def main():
 
     # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
     # print(caesar_decrypt(ct, caesar_break(ct)))
-    print(vigenere_encrypt("Welcome to the Vigenere breaking tool", "cryptii"))
+    key = "cryptii"
+    cypher = vigenere_encrypt("Welcome to the Vigenere breaking tool", key)
+    print(cypher)
+    plaintext = vigenere_decrypt(cypher, key)
+    print(plaintext)
 
 if __name__ == "__main__":
     main()
