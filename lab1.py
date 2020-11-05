@@ -112,9 +112,8 @@ def caesar_break(text):
     -------
     a number corresponding to the caesar key
     """
-    f = open("sample/book.txt", "r")
-    freq = freq_analysis(f.read())
-    f.close()
+    with open("sample/book.txt", "r") as f: 
+        freq = freq_analysis(f.read())
 
     normalized_text = normalize(text)
     normalized_text = re.sub('\W+','', normalized_text)
