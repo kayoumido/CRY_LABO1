@@ -6,7 +6,7 @@ from collections import Counter
 
 def normalize(text):
     """
-    Replace any spécial french character with it's "simpler" version and uppercase the text
+    Replace any special french character with it's "simpler" version and uppercase the text
     e.g. é => E
 
     Parameters
@@ -234,14 +234,40 @@ def coincidence_index(text):
     text = normalize(text)
 
     N = len(text)
+
+    if N == 1: 
+        return 1
+
     freq = Counter(text)
+    freq_sum = sum(freq[key] * (freq[key] - 1) for key in freq)
 
-    sum = 0.0
-    for key in freq:
-        sum += freq[key] * (freq[key] - 1)
+    return 26*freq_sum/(N * (N - 1))
 
-    return 26*sum/(N * (N - 1))
 
+
+def get_likely_key_length(text, l):
+    """
+    Determine the most likely key length for a given cyphertext
+
+    Parameters
+    ----------
+    text: the cyphertext to analyse
+    l: the maximum key length we want to guess
+    
+    Returns
+    -------
+    the most likely key length of the cyphertext <text>
+    """
+    likely_key_n_ic = (-1, -1.0)
+    # NOTE: Is it worth checking for chunks with a length of 1?
+    for length in range(2, l+1):
+        chunks = [text[i:i+length] for i in range(0, len(text), length)]
+
+        avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/length
+        if avg_ic > likely_key_n_ic[1]:
+            likely_key_n_ic = (length, avg_ic)
+
+    return likely_key_n_ic[0]
 
 def vigenere_break(text):
     """
@@ -309,17 +335,14 @@ def main():
 
     # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
     # print(caesar_decrypt(ct, caesar_break(ct)))
-    # key = "cryptii"
-    # cypher = vigenere_encrypt("Welcome to the Vigenere breaking tool", key)
-    # print(cypher)
-    # plaintext = vigenere_decrypt(cypher, key)
-    # print(plaintext)
+    key = "cryptii"
+    cypher = vigenere_encrypt("Welcome to the Vigenere breaking tool", key)
+    print(cypher)
+    plaintext = vigenere_decrypt(cypher, key)
+    print(plaintext)
 
-    with open("vigenere.txt", "r") as f:
-        freq = coincidence_index(f.read())
+    print(get_likely_key_length(cypher, 20))
 
-
-    print(freq)
 
 if __name__ == "__main__":
     main()
