@@ -129,8 +129,41 @@ def vigenere_encrypt(text, key):
     -------
     the ciphertext of <text> encrypted with Vigenere under key <key>
     """
-    #TODO
-    return ""
+    alph = string.ascii_uppercase
+    text = normalize(text)
+    key = key.upper()
+
+    cipher_text = ""
+    i = 0
+    for j in range(len(text)):
+        """
+        Note: A second index was added to parse the plaintext
+              This was done, so when a space is encountered,
+              we can skip to the next letter in the plaintext
+              BUT stay where we are for the key!
+
+              Another solution would have been to simply remove the spaces 
+              from the plaintext.
+              Code to do so:
+              text = re.sub('\W+','', text)
+        """
+
+        # just to make sure we aren't out of bounds
+        if i >= len(text): break
+
+        if text[i] not in alph:
+            cipher_text += text[i]
+            i += 1
+
+        # time to shift some letters :D
+        shift = alph.index(key[j % len(key)])
+        cl = (alph.index(text[i]) + shift) % 26
+        cipher_text += alph[cl]
+
+        i += 1
+
+
+    return cipher_text
 
 def vigenere_decrypt(text, key):
     """
@@ -224,8 +257,9 @@ def vigenere_caesar_break(text):
 def main():
     print("Welcome to the Vigenere breaking tool")
 
-    print(caesar_break(caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)))
-    #TODO something
+    # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
+    # print(caesar_decrypt(ct, caesar_break(ct)))
+    print(vigenere_encrypt("Welcome to the Vigenere breaking tool", "cryptii"))
 
 if __name__ == "__main__":
     main()
