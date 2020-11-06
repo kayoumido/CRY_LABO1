@@ -314,8 +314,22 @@ def vigenere_caesar_encrypt(text, vigenere_key, caesar_key):
     -------
     the ciphertext of <text> encrypted with improved Vigenere under keys <key_vigenere> and <key_caesar>
     """
-    #TODO
-    return ""
+
+    # split the text into chucks of <vigenere_key> length
+    chunks = [text[i:i+len(vigenere_key)] for i in range(0, len(text), len(vigenere_key))]
+
+    cyphertext = ""
+
+    cypher_key = vigenere_key
+    # encrypt the text chunk by chunk while encrypting the key_vigenere after each chunk encryption
+    for chunk in chunks:
+        print(cypher_key)
+        cyphertext += vigenere_encrypt(chunk, cypher_key)
+
+        # encrypt the key with caesar
+        cypher_key = caesar_encrypt(cypher_key, caesar_key)
+
+    return cyphertext
 
 def vigenere_caesar_decrypt(text, vigenere_key, caesar_key):
     """
@@ -361,17 +375,21 @@ def main():
 
     ct = caesar_encrypt(og_plaintext, 10)
     print(caesar_decrypt(ct, caesar_break(ct)))
+    print("\n")
     
     cypher = vigenere_encrypt(og_plaintext, key)
     print(cypher)
-
+    print()
     plaintext = vigenere_decrypt(cypher, key)
     print(plaintext)
-    
-    with open("vigenere.txt", "r") as f: 
-        cypher = f.read() 
+    print("\n")
+    # with open("vigenere.txt", "r") as f: 
+    #     cypher = f.read() 
 
-    print(vigenere_break(cypher))
+    # print(vigenere_break(cypher))
+
+    key = "maison"
+    print(vigenere_caesar_encrypt(og_plaintext, key, 2))
 
 
 if __name__ == "__main__":
