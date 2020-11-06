@@ -164,32 +164,16 @@ def vigenere_cypher(text, key, encrypt = True):
     key = key.upper()
 
     output = ""
-    i = 0
-    for j in range(len(text)):
-        """
-        Note: A second index was added to parse the plaintext
-              This was done, so when a space is encountered,
-              we can skip to the next letter in the plaintext
-              BUT stay where we are for the key!
 
-              Another solution would have been to simply remove the spaces 
-              from the plaintext.
-              Code to do so:
-              text = re.sub('\W+','', text)
-        """
-
-        # just to make sure we aren't out of bounds
-        if i >= len(text): break
-
+    key_i = 0
+    for i in range(len(text)):
         if text[i] not in alph:
             output += text[i]
-            i += 1
+            continue
 
-        shiftv = alph.index(key[j % len(key)])
-        # time to shift some letters :D
+        shiftv = alph.index(key[key_i % len(key)])
         output += shift(text[i], shift_direction*shiftv)
-
-        i += 1
+        key_i += 1
 
     return output
 
@@ -336,12 +320,18 @@ def main():
     # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
     # print(caesar_decrypt(ct, caesar_break(ct)))
     key = "cryptii"
-    cypher = vigenere_encrypt("Welcome to the Vigenere breaking tool", key)
+    og_plaintext = (
+        "MUST CHANGE MEETING LOCATION FROM BRIDGE TO UNDERPASS"\
+        "SINCE ENEMY AGENTS ARE BELIEVED TO HAVE BEEN ASSIGNED"\
+        "TO WATCH BRIDGE STOP MEETING TIME UNCHANGED  XX"
+    )
+
+    cypher = vigenere_encrypt(og_plaintext, key)
     print(cypher)
     plaintext = vigenere_decrypt(cypher, key)
     print(plaintext)
 
-    print(get_likely_key_length(cypher, 20))
+    print(get_likely_key_length(cypher, 5))
 
 
 if __name__ == "__main__":
