@@ -234,6 +234,10 @@ def get_likely_key_length(text, l, ref_ic):
     """
     Determine the most likely key length for a given cyphertext
 
+    Note: It's possible that a multiple of the key lenght is returned.
+          If the original key is "ABC", there's now way of telling that
+          it's not "ABCABC". Since both key will encrypt and decrypt a text
+          identicaly
     Parameters
     ----------
     text: the cyphertext to analyse
@@ -246,7 +250,6 @@ def get_likely_key_length(text, l, ref_ic):
     likely_key_n_ic = (2, ref_ic)
     text = re.sub('\W+','', text)
 
-    # NOTE: Is it worth checking for chunks with a length of 1?
     for length in range(2, l+1):
 
         chunks = []
@@ -254,15 +257,16 @@ def get_likely_key_length(text, l, ref_ic):
             chunk = ""
             for j in range(0, len(text[i:]), length):
                 chunk += text[i+j]
-            chunks.append(chunk)
+
+            if not chunk is " ":
+                chunks.append(chunk)
 
         avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/length
         diff = abs(avg_ic-ref_ic)
 
         # check if the current avg is close to the reference ic
-        if diff < likely_key_n_ic[1] and length % likely_key_n_ic[0] != 0:
+        if diff < likely_key_n_ic[1]:
             likely_key_n_ic = (length, diff)
-
 
     return likely_key_n_ic[0]
 
@@ -329,18 +333,20 @@ def vigenere_caesar_break(text):
 
 def main():
     print("Welcome to the Vigenere breaking tool")
-
-    # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
-    # print(caesar_decrypt(ct, caesar_break(ct)))
-    key = "ABCDEFGHIJKLMNOP"
+    
+    key = "cryptiia"
     og_plaintext = (
         "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
         "CAR ON PENSE QUE DES AGENTS ENNEMIS ONT ÉTÉ ASSIGNÉS "\
         "POUR SURVEILLER LA PONT HEURE DE RÉUNION INCHANGÉ XX"
     )
 
+    # ct = caesar_encrypt(og_plaintext, 10)
+    # print(caesar_decrypt(ct, caesar_break(ct)))
+    
     cypher = vigenere_encrypt(og_plaintext, key)
     print(cypher)
+
     plaintext = vigenere_decrypt(cypher, key)
     print(plaintext)
     
@@ -351,7 +357,6 @@ def main():
     #     cypher = f.read() 
 
     print(get_likely_key_length(cypher, 20, ic))
-
 
 
 if __name__ == "__main__":
