@@ -60,9 +60,9 @@ def caesar_encrypt(text, key):
     """
     encrypted = ""
     # normalize the text to encrypt & uppercase it
-    normalized_text = normalize(text)
+    text = normalize(text)
 
-    for char in normalized_text:
+    for char in text:
         encrypted += shift(char, key)
 
     return encrypted
@@ -94,9 +94,9 @@ def freq_analysis(text):
     """
     freq_vector = [0] * 26
     
-    normalized_text = normalize(text)
+    text = normalize(text)
 
-    occurences = Counter(normalized_text)
+    occurences = Counter(text)
 
     alph = string.ascii_uppercase
     for key in occurences:
@@ -119,15 +119,14 @@ def caesar_break(text):
     with open("sample/book.txt", "r") as f: 
         freq = freq_analysis(f.read())
 
-    normalized_text = normalize(text)
-    normalized_text = re.sub('\W+','', normalized_text)
+    text = normalize(text)
 
     possible_key = 0
     lowest_estimate = -1
     for i in range(0,26):
         estimate = 0
 
-        text_to_test = caesar_decrypt(normalized_text, i)
+        text_to_test = caesar_decrypt(text, i)
         occurences = Counter(text_to_test)
 
         for key in occurences:
@@ -218,12 +217,8 @@ def coincidence_index(text):
     the index of coincidence of the text
     """
     text = normalize(text)
-    text = re.sub('\W+','', text)
 
     N = len(text)
-
-    # if N == 1: 
-    #     return 1
 
     freq = Counter(text)
     freq_sum = sum(freq[key] * (freq[key] - 1) for key in freq)
@@ -250,7 +245,6 @@ def get_likely_key_length(text, l, ref_ic):
     the most likely key length of the cyphertext <text>
     """
     likely_key_n_ic = (2, ref_ic)
-    text = re.sub('\W+','', text)
 
     for length in range(2, l+1):
 
@@ -272,9 +266,7 @@ def get_likely_key_length(text, l, ref_ic):
 
     return likely_key_n_ic[0]
 
-def most_likely_key(text, key_length):
-    text = re.sub('\W+','', text)
-    
+def most_likely_key(text, key_length):   
     key = ""
     for i in range(key_length):
         chunk = ""
@@ -295,8 +287,19 @@ def vigenere_break(text):
     -------
     the keyword corresponding to the encryption key used to obtain the ciphertext
     """
-    #TODO
-    return ''
+    MAX_KEY_LEN_GUESS = 20
+    # get the ref ic
+    with open("sample/book.txt", "r") as f: 
+        ref_ic = coincidence_index(f.read())
+
+    # find the most likely key length
+    key_len = get_likely_key_length(text, MAX_KEY_LEN_GUESS, ref_ic)
+
+    # find the most likely key
+    key = most_likely_key(text, key_len)
+
+    # decrypt the text with
+    return vigenere_decrypt(text, key)
 
 
 def vigenere_caesar_encrypt(text, vigenere_key, caesar_key):
@@ -356,8 +359,8 @@ def main():
         "POUR SURVEILLER LA PONT HEURE DE RÉUNION INCHANGÉ XX"
     )
 
-    # ct = caesar_encrypt(og_plaintext, 10)
-    # print(caesar_decrypt(ct, caesar_break(ct)))
+    ct = caesar_encrypt(og_plaintext, 10)
+    print(caesar_decrypt(ct, caesar_break(ct)))
     
     cypher = vigenere_encrypt(og_plaintext, key)
     print(cypher)
@@ -365,13 +368,10 @@ def main():
     plaintext = vigenere_decrypt(cypher, key)
     print(plaintext)
     
-    with open("sample/book.txt", "r") as f: 
-        ic = coincidence_index(f.read())
+    with open("vigenere.txt", "r") as f: 
+        cypher = f.read() 
 
-    # with open("vigenere.txt", "r") as f: 
-    #     cypher = f.read() 
-
-    print(most_likely_key(cypher, get_likely_key_length(cypher, 20, ic)))
+    print(vigenere_break(cypher))
 
 
 if __name__ == "__main__":
