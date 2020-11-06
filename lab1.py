@@ -258,7 +258,7 @@ def get_likely_key_length(text, l, ref_ic):
             for j in range(0, len(text[i:]), length):
                 chunk += text[i+j]
 
-            if not chunk is " ":
+            if chunk != " ":
                 chunks.append(chunk)
 
         avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/length
@@ -269,6 +269,20 @@ def get_likely_key_length(text, l, ref_ic):
             likely_key_n_ic = (length, diff)
 
     return likely_key_n_ic[0]
+
+def most_likely_key(text, key_length):
+    text = re.sub('\W+','', text)
+    print(key_length)
+    
+    key = ""
+    for i in range(key_length):
+        chunk = ""
+        for j in range(0, len(text[i:]), key_length):
+            chunk += text[i+j]
+
+        key += chr(ord('A')+caesar_break(chunk))
+
+    return key
 
 def vigenere_break(text):
     """
@@ -334,7 +348,7 @@ def vigenere_caesar_break(text):
 def main():
     print("Welcome to the Vigenere breaking tool")
     
-    key = "cryptiia"
+    key = "rickrolled"
     og_plaintext = (
         "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
         "CAR ON PENSE QUE DES AGENTS ENNEMIS ONT ÉTÉ ASSIGNÉS "\
@@ -353,10 +367,10 @@ def main():
     with open("sample/book.txt", "r") as f: 
         ic = coincidence_index(f.read())
 
-    # with open("vigenere.txt", "r") as f: 
-    #     cypher = f.read() 
+    with open("vigenere.txt", "r") as f: 
+        cypher = f.read() 
 
-    print(get_likely_key_length(cypher, 20, ic))
+    print(most_likely_key(cypher, get_likely_key_length(cypher, 20, 2.02)))
 
 
 if __name__ == "__main__":
