@@ -18,7 +18,8 @@ def normalize(text):
     -------
     the normalized version of <text>
     """
-    return unidecode.unidecode(text).upper()
+
+    return ''.join(filter(str.isalpha, unidecode.unidecode(text).upper()))
 
 def shift(char, key):
     """
@@ -94,7 +95,7 @@ def freq_analysis(text):
     freq_vector = [0] * 26
     
     normalized_text = normalize(text)
-    normalized_text = re.sub('\W+','', normalized_text)
+
     occurences = Counter(normalized_text)
 
     alph = string.ascii_uppercase
@@ -217,11 +218,12 @@ def coincidence_index(text):
     the index of coincidence of the text
     """
     text = normalize(text)
+    text = re.sub('\W+','', text)
 
     N = len(text)
 
-    if N == 1: 
-        return 1
+    # if N == 1: 
+    #     return 1
 
     freq = Counter(text)
     freq_sum = sum(freq[key] * (freq[key] - 1) for key in freq)
@@ -272,7 +274,6 @@ def get_likely_key_length(text, l, ref_ic):
 
 def most_likely_key(text, key_length):
     text = re.sub('\W+','', text)
-    print(key_length)
     
     key = ""
     for i in range(key_length):
@@ -367,10 +368,10 @@ def main():
     with open("sample/book.txt", "r") as f: 
         ic = coincidence_index(f.read())
 
-    with open("vigenere.txt", "r") as f: 
-        cypher = f.read() 
+    # with open("vigenere.txt", "r") as f: 
+    #     cypher = f.read() 
 
-    print(most_likely_key(cypher, get_likely_key_length(cypher, 20, 2.02)))
+    print(most_likely_key(cypher, get_likely_key_length(cypher, 20, ic)))
 
 
 if __name__ == "__main__":
