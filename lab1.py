@@ -1,6 +1,7 @@
 import unidecode
 import string
 import re
+import math
 
 from collections import Counter
 
@@ -229,27 +230,39 @@ def coincidence_index(text):
 
 
 
-def get_likely_key_length(text, l):
+def get_likely_key_length(text, l, ref_ic):
     """
     Determine the most likely key length for a given cyphertext
 
     Parameters
     ----------
     text: the cyphertext to analyse
-    l: the maximum key length we want to guess
+    l: the maximum key length we're willing to guess
     
     Returns
     -------
     the most likely key length of the cyphertext <text>
     """
-    likely_key_n_ic = (-1, -1.0)
+    likely_key_n_ic = (2, ref_ic)
+    text = re.sub('\W+','', text)
+
     # NOTE: Is it worth checking for chunks with a length of 1?
     for length in range(2, l+1):
-        chunks = [text[i:i+length] for i in range(0, len(text), length)]
+
+        chunks = []
+        for i in range(length):
+            chunk = ""
+            for j in range(0, len(text[i:]), length):
+                chunk += text[i+j]
+            chunks.append(chunk)
 
         avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/length
-        if avg_ic > likely_key_n_ic[1]:
-            likely_key_n_ic = (length, avg_ic)
+        diff = abs(avg_ic-ref_ic)
+
+        # check if the current avg is close to the reference ic
+        if diff < likely_key_n_ic[1] and length % likely_key_n_ic[0] != 0:
+            likely_key_n_ic = (length, diff)
+
 
     return likely_key_n_ic[0]
 
@@ -319,19 +332,26 @@ def main():
 
     # ct = caesar_encrypt("Ceci est un texte dans la langue de Molliere", 10)
     # print(caesar_decrypt(ct, caesar_break(ct)))
-    key = "cryptii"
+    key = "ABCDEFGHIJKLMNOP"
     og_plaintext = (
-        "MUST CHANGE MEETING LOCATION FROM BRIDGE TO UNDERPASS"\
-        "SINCE ENEMY AGENTS ARE BELIEVED TO HAVE BEEN ASSIGNED"\
-        "TO WATCH BRIDGE STOP MEETING TIME UNCHANGED  XX"
+        "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
+        "CAR ON PENSE QUE DES AGENTS ENNEMIS ONT ÉTÉ ASSIGNÉS "\
+        "POUR SURVEILLER LA PONT HEURE DE RÉUNION INCHANGÉ XX"
     )
 
     cypher = vigenere_encrypt(og_plaintext, key)
     print(cypher)
     plaintext = vigenere_decrypt(cypher, key)
     print(plaintext)
+    
+    with open("sample/book.txt", "r") as f: 
+        ic = coincidence_index(f.read())
 
-    print(get_likely_key_length(cypher, 5))
+    # with open("vigenere.txt", "r") as f: 
+    #     cypher = f.read() 
+
+    print(get_likely_key_length(cypher, 20, ic))
+
 
 
 if __name__ == "__main__":
