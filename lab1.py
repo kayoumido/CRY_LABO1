@@ -8,7 +8,10 @@ from collections import Counter
 def normalize(text):
     """
     Replace any special french character with it's "simpler" version and uppercase the text
-    e.g. é => E
+
+    Example
+    -------
+    La crypto c'est génial => LACRYPTOCESTGENIAL
 
     Parameters
     ----------
@@ -24,10 +27,13 @@ def normalize(text):
 def shift(char, key):
     """
     Shifts a char <char> by <key> times
-    e.g. 
+
+    Example
+    -------
     char = 'A'
     key = 2
-    shifted_char = 'C'
+
+    => 'C'
 
     Parameters
     ----------
@@ -40,7 +46,7 @@ def shift(char, key):
     """ 
     alph = string.ascii_uppercase
 
-    # quick check to see if it's in the alphabet
+    # quick check to see if <char> is in the alphabet
     # if not just return it
     if not char in alph:
         return char
@@ -139,6 +145,89 @@ def caesar_break(text):
     return possible_key
 
 
+def vigenere_chunkify(text, chunk_nb, key_len, extra_shift=0):
+    """
+    Returns a chunk of a given text
+
+    Example
+    -------
+    text = ABCDEFG
+    key_len = 2
+
+    The text can be split into 2 chunks
+    ACEG & BDF
+
+    Parameters
+    ----------
+    text: the text were to get chunk
+    chunk_nb: the chunk we want to extract
+    key_len: the length of the key that cyphered <text>
+    extra_shift: the value of a possible extra_shift (default = 0)
+
+    Returns
+    -------
+    the wanted chunk
+    """
+    chunk = ""
+    for j in range(0, len(text[chunk_nb:]), key_len):
+        # add the char to the chunk (w/ the removal of a potentiel shift)
+        chunk += shift(text[chunk_nb+j], -(int(j/key_len)*extra_shift))
+
+    return chunk
+
+def vigenere_chunkify_list(text, key_len, extra_shift=0):
+    """
+    Transforms a text into a list of chunks
+
+    Example
+    -------
+    text = ABCDEFG
+    key_len = 2
+
+    The text will be split into 2 chunks
+    [ACEG, BDF]
+
+    Parameters
+    ----------
+    text: the text we want to split into chunks
+    key_len: the length of the key that cyphered <text>
+    extra_shift: the value of a possible extra_shift (default = 0)
+
+    Returns
+    -------
+    the list of chunk
+    """
+    chunks = []
+    for i in range(key_len):
+        chunk = vigenere_chunkify(text, i, key_len, extra_shift)
+
+        if chunk != " ":
+            chunks.append(chunk)
+    
+    return chunks
+
+def vigenere_unchunkify(chunks):
+    """
+    merge a list of chunks into a string
+
+    Example
+    -------
+    [ACEG, BDF] => ABCDEFG
+
+    Parameters
+    ----------
+    chunks: the list of chunks we want to merge
+
+    Returns
+    -------
+    the list of chunk merged
+    """
+    output = ""
+    for i in range(len(chunks[0])):
+        for chunk in chunks:
+            if i < len(chunk):
+                output += chunk[i]
+    return output
 
 def vigenere_cypher(text, key, encrypt = True):
     """
@@ -158,23 +247,17 @@ def vigenere_cypher(text, key, encrypt = True):
     the value of <text> encrypted/decrypted with Vigenere under key <key>
     """
     shift_direction = 1 if encrypt else -1
-    alph = string.ascii_uppercase
     text = normalize(text)
     key = key.upper()
 
-    output = ""
+    chunks = vigenere_chunkify_list(text, len(key))
+    caesared_chunks = []
 
-    key_i = 0
-    for i in range(len(text)):
-        if text[i] not in alph:
-            output += text[i]
-            continue
+    for i in range(len(key)):
+        shiftv = string.ascii_uppercase.index(key[i])
+        caesared_chunks.append(caesar_encrypt(chunks[i], shift_direction*shiftv))
 
-        shiftv = alph.index(key[key_i % len(key)])
-        output += shift(text[i], shift_direction*shiftv)
-        key_i += 1
-
-    return output
+    return vigenere_unchunkify(caesared_chunks)
 
 def vigenere_encrypt(text, key):
     """
@@ -229,10 +312,12 @@ def most_likely_key_length(text, l, ref_ic, extra_shift=0):
     """
     Determine the most likely key length for a given cyphertext
 
-    Note: It's possible that a multiple of the key length is returned.
-          e.g. if the original key is "ABC", the function might return 6.
-          Because there's no way of telling that it's not "ABCABC".
-          Since both key will encrypt and decrypt a text the same
+    Note
+    ----
+    It's possible that a multiple of the key length is returned.
+    e.g. If the original key is "ABC", the function might return 6.
+         Because there's no way of telling that the key isn't "ABCABC".
+         Since both keys will encrypt and decrypt the same
 
     Parameters
     ----------
@@ -243,26 +328,12 @@ def most_likely_key_length(text, l, ref_ic, extra_shift=0):
 
     Returns
     -------
-    the most likely key length of the cyphertext <text> or None is nothing was found
+    the most likely key length of the cyphertext <text> or None if nothing was found
     """
     likely_key = ref_ic
 
     for key_len in range(2, l+1):
-
-        chunks = []
-        for i in range(key_len):
-            chunk = ""
-            for j in range(0, len(text[i:]), key_len):
-                # get the current chars position in the alphabet
-                m_pos = ord(text[i+j]) - ord("A")
-                # calculate the potential casear shift that was applied
-                casear_shift = int(j/key_len)*extra_shift
-                # add the char to the chunk (w/ the potentiel shift removed)
-                chunk += chr((m_pos - casear_shift)%26 + ord("A"))
-
-            if chunk != " ":
-                chunks.append(chunk)
-
+        chunks = vigenere_chunkify_list(text, key_len, extra_shift)
         avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/key_len
 
         # check if the current avg is close to the reference ic
@@ -271,7 +342,7 @@ def most_likely_key_length(text, l, ref_ic, extra_shift=0):
 
     return likely_key if likely_key != ref_ic else None
 
-def most_likely_key(text, key_length, extra_shift=0):
+def most_likely_key(text, key_len, extra_shift=0):
     """
     Determine the most likely key for a given cyphertext
 
@@ -286,15 +357,8 @@ def most_likely_key(text, key_length, extra_shift=0):
     the most likely key of the cyphertext <text>
     """
     key = ""
-    for i in range(key_length):
-        chunk = ""
-        for j in range(0, len(text[i:]), key_length):
-            m_pos = ord(text[i+j]) - ord("A")
-            casear_shift = int(j/key_length)*extra_shift%26
-
-            chunk += chr((m_pos - casear_shift)%26 + ord("A"))
-
-        key += chr(ord('A')+caesar_break(chunk))
+    for i in range(key_len):
+        key += chr(ord('A')+caesar_break(vigenere_chunkify(text, i, key_len, extra_shift)))
 
     return key
 
@@ -411,7 +475,7 @@ def vigenere_caesar_break(text):
 
 def main():
     print("Welcome to the Vigenere breaking tool")
-    
+
     key = "cryptii"
     og_plaintext = (
         "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
@@ -431,11 +495,11 @@ def main():
     print(plaintext)
     print("\n")
 
-    # with open("vigenere.txt", "r") as f: 
-    #     cypher = f.read() 
+    with open("vigenere.txt", "r") as f: 
+        cypher = f.read() 
 
-    # print(vigenere_break(cypher))
-    # print("\n")
+    print(vigenere_break(cypher))
+    print("\n")
 
     # ck = 2
     # cypher = vigenere_caesar_encrypt(og_plaintext, key, ck)
