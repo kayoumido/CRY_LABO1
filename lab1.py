@@ -1,3 +1,6 @@
+# Author: Doran Kayoumi
+# NOTE: Don't forget to install https://pypi.org/project/Unidecode/
+
 import unidecode
 import string
 import re
