@@ -220,6 +220,9 @@ def coincidence_index(text):
 
     N = len(text)
 
+    if N <= 1:
+        return N
+
     freq = Counter(text)
     freq_sum = sum(freq[key] * (freq[key] - 1) for key in freq)
 
@@ -227,7 +230,7 @@ def coincidence_index(text):
 
 
 
-def get_likely_key_length(text, l, ref_ic):
+def most_likely_key_length(text, l, ref_ic, extra_shift=0):
     """
     Determine the most likely key length for a given cyphertext
 
@@ -252,7 +255,10 @@ def get_likely_key_length(text, l, ref_ic):
         for i in range(length):
             chunk = ""
             for j in range(0, len(text[i:]), length):
-                chunk += text[i+j]
+                m_pos = ord(text[i+j]) - ord("A")
+                casear_shift = int(j/length)*extra_shift%26
+
+                chunk += chr((m_pos - casear_shift)%26 + ord("A"))
 
             if chunk != " ":
                 chunks.append(chunk)
@@ -261,17 +267,20 @@ def get_likely_key_length(text, l, ref_ic):
         diff = abs(avg_ic-ref_ic)
 
         # check if the current avg is close to the reference ic
-        if diff < likely_key_n_ic[1]:
+        if diff < likely_key_n_ic[1]: # and math.isclose(avg_ic, ref_ic, abs_tol = 0.3):
             likely_key_n_ic = (length, diff)
 
-    return likely_key_n_ic[0]
+    return likely_key_n_ic
 
-def most_likely_key(text, key_length):   
+def most_likely_key(text, key_length, extra_shift=0):   
     key = ""
     for i in range(key_length):
         chunk = ""
         for j in range(0, len(text[i:]), key_length):
-            chunk += text[i+j]
+            m_pos = ord(text[i+j]) - ord("A")
+            casear_shift = int(j/key_length)*extra_shift%26
+
+            chunk += chr((m_pos - casear_shift)%26 + ord("A"))
 
         key += chr(ord('A')+caesar_break(chunk))
 
@@ -293,7 +302,7 @@ def vigenere_break(text):
         ref_ic = coincidence_index(f.read())
 
     # find the most likely key length
-    key_len = get_likely_key_length(text, MAX_KEY_LEN_GUESS, ref_ic)
+    key_len = most_likely_key_length(text, MAX_KEY_LEN_GUESS, ref_ic)[0]
 
     # find the most likely key
     key = most_likely_key(text, key_len)
@@ -371,7 +380,17 @@ def vigenere_caesar_break(text):
         the keyword corresponding to the vigenere key used to obtain the ciphertext
         the number corresponding to the caesar key used to obtain the ciphertext
     """
-    #TODO you can delete the next lines if needed
+    with open("sample/book.txt", "r") as f:  
+        ref_ic = coincidence_index(f.read())
+
+    likely_key_len = (2, ref_ic)
+    for ckey in range(26):
+        possible_key_len = most_likely_key_length(text, 20, ref_ic, extra_shift=ckey)
+        
+        if possible_key_len[1] < likely_key_len[1]:
+            likely_key_len = possible_key_len
+            print(possible_key_len)
+
     vigenere_key = ""
     caesar_key = ''
     return (vigenere_key, caesar_key)
@@ -379,35 +398,38 @@ def vigenere_caesar_break(text):
 def main():
     print("Welcome to the Vigenere breaking tool")
     
-    key = "maison"
+    key = "heig"
     og_plaintext = (
         "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
         "CAR ON PENSE QUE DES AGENTS ENNEMIS ONT ÉTÉ ASSIGNÉS "\
         "POUR SURVEILLER LA PONT HEURE DE RÉUNION INCHANGÉ XX"
     )
 
-    ct = caesar_encrypt(og_plaintext, 10)
-    print(caesar_decrypt(ct, caesar_break(ct)))
-    print("\n")
+    # ct = caesar_encrypt(og_plaintext, 10)
+    # print(caesar_decrypt(ct, caesar_break(ct)))
+    # print("\n")
 
-    cypher = vigenere_encrypt(og_plaintext, key)
+    # cypher = vigenere_encrypt(og_plaintext, key)
+    # print(cypher)
+    # print()
+    # plaintext = vigenere_decrypt(cypher, key)
+    # print(plaintext)
+    # print("\n")
+
+    # with open("vigenere.txt", "r") as f: 
+    #     cypher = f.read() 
+
+    # print(vigenere_break(cypher))
+    # print("\n")
+
+    ck = 2
+    cypher = vigenere_caesar_encrypt(og_plaintext, key, ck)
     print(cypher)
-    print()
-    plaintext = vigenere_decrypt(cypher, key)
+
+    plaintext = vigenere_caesar_decrypt(cypher, key, ck)
     print(plaintext)
-    print("\n")
 
-    with open("vigenere.txt", "r") as f: 
-        cypher = f.read() 
-
-    print(vigenere_break(cypher))
-    print("\n")
-
-    cypher = vigenere_caesar_encrypt(og_plaintext, key, 2)
-    print(cypher)
-
-    plaintext = vigenere_caesar_decrypt(cypher, key, 2)
-    print(plaintext)
+    print(vigenere_caesar_break(cypher))
 
 
 if __name__ == "__main__":
