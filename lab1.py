@@ -27,7 +27,7 @@ def shift(char, key):
     e.g. 
     char = 'A'
     key = 2
-    char = 'C'
+    shifted_char = 'C'
 
     Parameters
     ----------
@@ -58,14 +58,13 @@ def caesar_encrypt(text, key):
     -------
     the ciphertext of <text> encrypted with Caesar under key <key>
     """
-    encrypted = ""
-    # normalize the text to encrypt & uppercase it
+    ciphertext = ""
     text = normalize(text)
 
     for char in text:
-        encrypted += shift(char, key)
+        ciphertext += shift(char, key)
 
-    return encrypted
+    return ciphertext
 
 def caesar_decrypt(text, key):
     """
@@ -152,13 +151,12 @@ def vigenere_cypher(text, key, encrypt = True):
     ----------
     text: the text to encrypt/decrypt
     key: the keyword used in Vigenere (e.g. "pass")
-    encrypt: boolean to tell if we are encrypthing or not
+    encrypt: boolean to tell if we are encrypthing or not (default = True)
     
     Returns
     -------
     the value of <text> encrypted/decrypted with Vigenere under key <key>
     """
-
     shift_direction = 1 if encrypt else -1
     alph = string.ascii_uppercase
     text = normalize(text)
@@ -189,7 +187,6 @@ def vigenere_encrypt(text, key):
     -------
     the ciphertext of <text> encrypted with Vigenere under key <key>
     """
-
     return vigenere_cypher(text, key)
 
 def vigenere_decrypt(text, key):
@@ -203,7 +200,6 @@ def vigenere_decrypt(text, key):
     -------
     the plaintext of <text> decrypted with Vigenere under key <key>
     """
-
     return vigenere_cypher(text, key, False)
 
 def coincidence_index(text):
@@ -229,50 +225,66 @@ def coincidence_index(text):
     return 26*freq_sum/(N * (N - 1))
 
 
-
 def most_likely_key_length(text, l, ref_ic, extra_shift=0):
     """
     Determine the most likely key length for a given cyphertext
 
-    Note: It's possible that a multiple of the key lenght is returned.
-          If the original key is "ABC", there's now way of telling that
-          it's not "ABCABC". Since both key will encrypt and decrypt a text
-          identicaly
+    Note: It's possible that a multiple of the key length is returned.
+          e.g. if the original key is "ABC", the function might return 6.
+          Because there's no way of telling that it's not "ABCABC".
+          Since both key will encrypt and decrypt a text the same
+
     Parameters
     ----------
     text: the cyphertext to analyse
     l: the maximum key length we're willing to guess
-    
+    ref_ic: the index of coincidence that we should aim for
+    extra_shift: the value of a possible extra_shift (default = 0)
+
     Returns
     -------
-    the most likely key length of the cyphertext <text>
+    the most likely key length of the cyphertext <text> or None is nothing was found
     """
-    likely_key_n_ic = (2, ref_ic)
+    likely_key = ref_ic
 
-    for length in range(2, l+1):
+    for key_len in range(2, l+1):
 
         chunks = []
-        for i in range(length):
+        for i in range(key_len):
             chunk = ""
-            for j in range(0, len(text[i:]), length):
+            for j in range(0, len(text[i:]), key_len):
+                # get the current chars position in the alphabet
                 m_pos = ord(text[i+j]) - ord("A")
-                casear_shift = int(j/length)*extra_shift%26
-
+                # calculate the potential casear shift that was applied
+                casear_shift = int(j/key_len)*extra_shift
+                # add the char to the chunk (w/ the potentiel shift removed)
                 chunk += chr((m_pos - casear_shift)%26 + ord("A"))
 
             if chunk != " ":
                 chunks.append(chunk)
 
-        avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/length
-        diff = abs(avg_ic-ref_ic)
+        avg_ic = sum(coincidence_index(chunk) for chunk in chunks)/key_len
 
         # check if the current avg is close to the reference ic
-        if diff < likely_key_n_ic[1] and math.isclose(avg_ic, ref_ic, abs_tol = 0.3):
-            likely_key_n_ic = (length, diff)
+        if abs(avg_ic-ref_ic) < likely_key and math.isclose(avg_ic, ref_ic, abs_tol = 0.3):
+            likely_key = key_len
 
-    return likely_key_n_ic
+    return likely_key if likely_key != ref_ic else None
 
-def most_likely_key(text, key_length, extra_shift=0):   
+def most_likely_key(text, key_length, extra_shift=0):
+    """
+    Determine the most likely key for a given cyphertext
+
+    Parameters
+    ----------
+    text: the cyphertext to analyse
+    key_length: the length of the key
+    extra_shift: the value of a possible extra_shift (default = 0)
+
+    Returns
+    -------
+    the most likely key of the cyphertext <text>
+    """
     key = ""
     for i in range(key_length):
         chunk = ""
@@ -302,13 +314,14 @@ def vigenere_break(text):
         ref_ic = coincidence_index(f.read())
 
     # find the most likely key length
-    key_len = most_likely_key_length(text, MAX_KEY_LEN_GUESS, ref_ic)[0]
+    key_len = most_likely_key_length(text, MAX_KEY_LEN_GUESS, ref_ic)
 
     # find the most likely key
     key = most_likely_key(text, key_len)
 
     # decrypt the text with
     return vigenere_decrypt(text, key)
+
 
 
 def vigenere_caesar_encrypt(text, vigenere_key, caesar_key):
@@ -384,16 +397,15 @@ def vigenere_caesar_break(text):
         ref_ic = coincidence_index(f.read())
 
     caesar_key = 0
-
-    likely_key_len = (2, ref_ic, 0)
+    likely_key_len = ref_ic
     for ckey in range(26):
         possible_key_len = most_likely_key_length(text, 20, ref_ic, extra_shift=ckey)
 
-        if possible_key_len[1] < likely_key_len[1]:
+        if possible_key_len:
             likely_key_len = possible_key_len
             caesar_key = ckey
 
-    vigenere_key = most_likely_key(text, likely_key_len[0], caesar_key)
+    vigenere_key = most_likely_key(text, likely_key_len, caesar_key)
 
     return (vigenere_key, caesar_key)
 
@@ -411,15 +423,16 @@ def main():
     # print(caesar_decrypt(ct, caesar_break(ct)))
     # print("\n")
 
-    # cypher = vigenere_encrypt(og_plaintext, key)
-    # print(cypher)
-    # print()
-    # plaintext = vigenere_decrypt(cypher, key)
-    # print(plaintext)
-    # print("\n")
+    cypher = vigenere_encrypt(og_plaintext, key)
+    print(cypher)
+    print()
+    plaintext = vigenere_decrypt(cypher, key)
+    print(normalize(og_plaintext))
+    print(plaintext)
+    print("\n")
 
-    with open("vigenereAmeliore2019.txt", "r") as f: 
-        cypher = f.read() 
+    # with open("vigenere.txt", "r") as f: 
+    #     cypher = f.read() 
 
     # print(vigenere_break(cypher))
     # print("\n")
@@ -431,8 +444,8 @@ def main():
     # plaintext = vigenere_caesar_decrypt(cypher, key, ck)
     # print(plaintext)
 
-    vk, ck = vigenere_caesar_break(cypher)
-    print(vigenere_caesar_decrypt(cypher, vk, ck))
+    # vk, ck = vigenere_caesar_break(cypher)
+    # print(vigenere_caesar_decrypt(cypher, vk, ck))
 
 if __name__ == "__main__":
     main()
