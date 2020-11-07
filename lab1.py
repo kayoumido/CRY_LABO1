@@ -383,6 +383,8 @@ def vigenere_break(text):
     # find the most likely key
     key = most_likely_key(text, key_len)
 
+    print("Found key: {}".format(key))
+
     # decrypt the text with
     return vigenere_decrypt(text, key)
 
@@ -475,41 +477,76 @@ def vigenere_caesar_break(text):
 
 def main():
     print("Welcome to the Vigenere breaking tool")
+    print("-------------------------------------")
+    print()
 
-    key = "cryptii"
-    og_plaintext = (
+    print("Caesar cypher")
+    print("-------------")
+    caesar_text = (
         "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
         "CAR ON PENSE QUE DES AGENTS ENNEMIS ONT ÉTÉ ASSIGNÉS "\
         "POUR SURVEILLER LE PONT HEURE DE RÉUNION INCHANGÉ XX"
     )
-
-    # ct = caesar_encrypt(og_plaintext, 10)
-    # print(caesar_decrypt(ct, caesar_break(ct)))
-    # print("\n")
-
-    cypher = vigenere_encrypt(og_plaintext, key)
-    print(cypher)
+    caesar_key = 10
+    print("Orignial plaintext: {}\nKey: {}".format(caesar_text, caesar_key))
     print()
-    plaintext = vigenere_decrypt(cypher, key)
-    print(normalize(og_plaintext))
-    print(plaintext)
+    
+    ct = caesar_encrypt(caesar_text, caesar_key)
+    print("Encrypted text: {}".format(ct))
+    print("Decrypted text: {}".format(caesar_decrypt(ct, caesar_key)))
+    print()
+
+    print("Breaking Caesar")
+    print("---")
+    print("Found key: {}".format(caesar_break(ct)))
+
     print("\n")
 
+    print("Vigenere cypher")
+    print("---------------")
+    vigenere_text = "La crypto c'est génial"
+    vigenere_key = "cryptii"
+    print("Orignial plaintext: {}\nKey: {}".format(vigenere_text, vigenere_key))
+    print()
+
+    ct = vigenere_encrypt(vigenere_text, vigenere_key)
+    print("Encrypted text: {}".format(ct))
+    print("Decrypted text: {}".format(vigenere_decrypt(ct, vigenere_key)))
+    print()
+
+    print("Breaking Vigenere")
+    print("---")
     with open("vigenere.txt", "r") as f: 
         cypher = f.read() 
 
-    print(vigenere_break(cypher))
+    print("Text to break: {}".format(cypher))
+    print("Plaintext text: {}".format(vigenere_break(cypher)))
+    
     print("\n")
 
-    # ck = 2
-    # cypher = vigenere_caesar_encrypt(og_plaintext, key, ck)
-    # print(cypher)
+    print("Vigenere Caesar cypher")
+    print("----------------------")
+    vigenere_caesar_text = "On s'amuse toujours à l'heig-vd!"
+    vigenere_caesar_vkey = "cryptii"
+    vigenere_caesar_ckey = 10
+    print("Orignial plaintext: {}\nVigenere key: {}\nCaesar key: {}".format(vigenere_caesar_text, vigenere_caesar_vkey, vigenere_caesar_ckey))
+    print()
 
-    # plaintext = vigenere_caesar_decrypt(cypher, key, ck)
-    # print(plaintext)
+    ct = vigenere_caesar_encrypt(vigenere_caesar_text, vigenere_caesar_vkey, vigenere_caesar_ckey)
+    print("Encrypted text: {}".format(ct))
+    print("Decrypted text: {}".format(vigenere_caesar_decrypt(ct, vigenere_caesar_vkey, vigenere_caesar_ckey)))
+    print()
 
-    # vk, ck = vigenere_caesar_break(cypher)
-    # print(vigenere_caesar_decrypt(cypher, vk, ck))
+    print("Breaking Vigenere Caesar")
+    print("---")
+    with open("vigenereAmeliore.txt", "r") as f: 
+        cypher = f.read()
+
+    print("Text to break: {}".format(cypher))
+    vkey, ckey = vigenere_caesar_break(cypher)
+    print("Vigenere key: {}".format(vkey))
+    print("Caesar key: {}".format(ckey))
+    print("Plaintext text: {}".format(vigenere_caesar_decrypt(cypher, vkey, ckey)))
 
 if __name__ == "__main__":
     main()
