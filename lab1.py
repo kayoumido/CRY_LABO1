@@ -267,7 +267,7 @@ def most_likely_key_length(text, l, ref_ic, extra_shift=0):
         diff = abs(avg_ic-ref_ic)
 
         # check if the current avg is close to the reference ic
-        if diff < likely_key_n_ic[1]: # and math.isclose(avg_ic, ref_ic, abs_tol = 0.3):
+        if diff < likely_key_n_ic[1] and math.isclose(avg_ic, ref_ic, abs_tol = 0.3):
             likely_key_n_ic = (length, diff)
 
     return likely_key_n_ic
@@ -383,26 +383,28 @@ def vigenere_caesar_break(text):
     with open("sample/book.txt", "r") as f:  
         ref_ic = coincidence_index(f.read())
 
-    likely_key_len = (2, ref_ic)
+    caesar_key = 0
+
+    likely_key_len = (2, ref_ic, 0)
     for ckey in range(26):
         possible_key_len = most_likely_key_length(text, 20, ref_ic, extra_shift=ckey)
-        
+
         if possible_key_len[1] < likely_key_len[1]:
             likely_key_len = possible_key_len
-            print(possible_key_len)
+            caesar_key = ckey
 
-    vigenere_key = ""
-    caesar_key = ''
+    vigenere_key = most_likely_key(text, likely_key_len[0], caesar_key)
+
     return (vigenere_key, caesar_key)
 
 def main():
     print("Welcome to the Vigenere breaking tool")
     
-    key = "heig"
+    key = "cryptii"
     og_plaintext = (
         "DOIT CHANGER DE LIEU DE RÉUNION, PASSANT DU PONT AU PASSAGE SOUTERRAIN "\
         "CAR ON PENSE QUE DES AGENTS ENNEMIS ONT ÉTÉ ASSIGNÉS "\
-        "POUR SURVEILLER LA PONT HEURE DE RÉUNION INCHANGÉ XX"
+        "POUR SURVEILLER LE PONT HEURE DE RÉUNION INCHANGÉ XX"
     )
 
     # ct = caesar_encrypt(og_plaintext, 10)
@@ -416,21 +418,21 @@ def main():
     # print(plaintext)
     # print("\n")
 
-    # with open("vigenere.txt", "r") as f: 
-    #     cypher = f.read() 
+    with open("vigenereAmeliore2019.txt", "r") as f: 
+        cypher = f.read() 
 
     # print(vigenere_break(cypher))
     # print("\n")
 
-    ck = 2
-    cypher = vigenere_caesar_encrypt(og_plaintext, key, ck)
-    print(cypher)
+    # ck = 2
+    # cypher = vigenere_caesar_encrypt(og_plaintext, key, ck)
+    # print(cypher)
 
-    plaintext = vigenere_caesar_decrypt(cypher, key, ck)
-    print(plaintext)
+    # plaintext = vigenere_caesar_decrypt(cypher, key, ck)
+    # print(plaintext)
 
-    print(vigenere_caesar_break(cypher))
-
+    vk, ck = vigenere_caesar_break(cypher)
+    print(vigenere_caesar_decrypt(cypher, vk, ck))
 
 if __name__ == "__main__":
     main()
