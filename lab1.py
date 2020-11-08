@@ -237,7 +237,7 @@ def vigenere_cypher(text, key, encrypt = True):
     Implementation of Vigenere's cypher. 
     
     Note: Since the same code is used for encryption and decryption the only 
-          difference beeing the direction in which the text is shifted (hence <encrypted>)
+          difference beeing the direction in which the text is shifted (hence the argument <encrypt>)
 
     Parameters
     ----------
