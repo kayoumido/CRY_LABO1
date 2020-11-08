@@ -24,7 +24,6 @@ def normalize(text):
     -------
     the normalized version of <text>
     """
-
     return ''.join(filter(str.isalpha, unidecode.unidecode(text).upper()))
 
 def shift(char, key):
@@ -101,7 +100,6 @@ def freq_analysis(text):
         the frequencies of every letter (a-z) in the text. 
     """
     freq_vector = [0] * 26
-    
     text = normalize(text)
 
     occurences = Counter(text)
@@ -126,8 +124,6 @@ def caesar_break(text):
     """
     with open("sample/book.txt", "r") as f: 
         freq = freq_analysis(f.read())
-
-    text = normalize(text)
 
     possible_key = 0
     lowest_estimate = -1
