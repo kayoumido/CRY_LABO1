@@ -8,6 +8,13 @@ import math
 
 from collections import Counter
 
+
+SAMPLE_TEXT = "sample/book.txt"
+MAX_KEY_LEN_GUESS = 20
+VIGENERE_TEXT_TO_BREAK = "vigenere.txt"
+VIGENERE_CAESAR_TEXT_TO_BREAK = "vigenereAmeliore.txt"
+
+
 def normalize(text):
     """
     Replace any special french character with it's "simpler" version and uppercase the text
@@ -122,7 +129,7 @@ def caesar_break(text):
     -------
     a number corresponding to the caesar key
     """
-    with open("sample/book.txt", "r") as f: 
+    with open(SAMPLE_TEXT, "r") as f: 
         freq = freq_analysis(f.read())
 
     possible_key = 0
@@ -371,9 +378,9 @@ def vigenere_break(text):
     -------
     the keyword corresponding to the encryption key used to obtain the ciphertext
     """
-    MAX_KEY_LEN_GUESS = 20
+    
     # get the ref ic
-    with open("sample/book.txt", "r") as f: 
+    with open(SAMPLE_TEXT, "r") as f: 
         ref_ic = coincidence_index(f.read())
 
     # find the most likely key length
@@ -458,13 +465,13 @@ def vigenere_caesar_break(text):
         the keyword corresponding to the vigenere key used to obtain the ciphertext
         the number corresponding to the caesar key used to obtain the ciphertext
     """
-    with open("sample/book.txt", "r") as f:  
+    with open(SAMPLE_TEXT, "r") as f:  
         ref_ic = coincidence_index(f.read())
 
     caesar_key = 0
     likely_key_len = ref_ic
     for ckey in range(26):
-        possible_key_len = most_likely_key_length(text, 20, ref_ic, extra_shift=ckey)
+        possible_key_len = most_likely_key_length(text, MAX_KEY_LEN_GUESS, ref_ic, extra_shift=ckey)
 
         if possible_key_len:
             likely_key_len = possible_key_len
@@ -515,7 +522,7 @@ def main():
 
     print("Breaking Vigenere")
     print("---")
-    with open("vigenere.txt", "r") as f: 
+    with open(VIGENERE_TEXT_TO_BREAK, "r") as f: 
         cypher = f.read() 
 
     print("Text to break: {}".format(cypher))
@@ -538,7 +545,7 @@ def main():
 
     print("Breaking Vigenere Caesar")
     print("---")
-    with open("vigenereAmeliore.txt", "r") as f: 
+    with open(VIGENERE_CAESAR_TEXT_TO_BREAK, "r") as f: 
         cypher = f.read()
 
     print("Text to break: {}".format(cypher))
